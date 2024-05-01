@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>HTML 5</title>
+    </head>
+    <body>
+        <h1> Dashboard </h1>
+        <table>
+            <tbody>
+              <tr>
+                <th scope="col">Total number of players</th>
+                <th scope="col">Number of active players</th>
+                <th scope="col">Number of inactive players</th>
+                <th scope="col">Average current balance of all players</th>
+              </tr>
+            </tbody>
+            <tr>
+              <td id="total_num"></td>
+              <td id="num_active"></td>
+              <td id="num_inactive"></td>
+              <td id="avg_balance"></td>
+            </tr>
+        </table>
+        <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const updateDashboard = () => {
+                        return fetch('/api/dashboard/player')
+                        .then(r => r.json())
+                        .then(data => {
+                            let total_num = document.getElementById('total_num')
+                            total_num.innerHTML = data.total_num
+                            let num_active = document.getElementById('num_active')
+                            num_active.innerHTML = data.num_active
+                            let num_inactive = document.getElementById('num_inactive')
+                            num_inactive.innerHTML = data.num_inactive
+                            let avg_balance = document.getElementById('avg_balance')
+                            avg_balance.innerHTML = data.avg_balance
+                        })
+                        .catch(error => {
+                            document.getElementById('flash-message').innerHTML = error;
+                        });
+                    };
+                    updateDashboard();
+                    setInterval(updateDashboard, 1 * 1e3);
+                });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,183 @@
+<h1>Players</h1>
+<label>Search Name: <input type="text" id="search-box" placeholder="Search players by name..."></label>
+<div>
+  <label>Name Filter: <select id="name" name="name">
+      <option value="fname">First Name</option>
+      <option value="lname">Last Name</option>
+      <option value="fname,lname">Total Name</option>
+    </select></label>
+</div>
+<table>
+  <tbody>
+    <tr>
+      <th scope="col">Rows</th>
+      <th scope="col">ID</th>
+      <th scope="col">Name</th>
+      <th scope="col">Handed</th>
+      <th scope="col">Active State</th>
+      <th scope="col">Number of Join</th>
+      <th scope="col">Number of Won</th>
+      <th scope="col">Number of Disqualified</th>
+      <th scope="col">Current Balance</th>
+      <th scope="col">Total Points</th>
+      <th scope="col">Total Prize</th>
+      <th scope="col">Efficiency</th>
+      <th scope="col">In Activate Match</th>
+      <th scope="col">Edit Link</th>
+    </tr>
+  </tbody>
+  <tbody class="player-list">
+    <% rows=0, data.forEach((d)=>{ %>
+      <tr>
+        <td>
+          <%= ++rows %>
+        </td>
+        <td>
+          <%= d.pid %>
+        </td>
+        <td>
+          <%= d.name %>
+        </td>
+        <td>
+          <%= d.handed %>
+        </td>
+        <td>
+          <%= d.is_active %>
+        </td>
+        <td>
+          <%= d.num_join %>
+        </td>
+        <td>
+          <%= d.num_won %>
+        </td>
+        <td>
+          <%= d.num_dq %>
+        </td>
+        <td>
+          <%= d.balance_usd_cents %>
+        </td>
+        <td>
+          <%= d.total_points %>
+        </td>
+        <td>
+          <%= d.total_prize_usd_cents %>
+        </td>
+        <td>
+          <%= d.efficiency %>
+        </td>
+        <td>
+          <%= d.in_active_match %>
+        </td>
+        <td><a href="http://127.0.0.1:3000/player/<%= d.pid %>/edit.html">Edit Player</a></td>
+      </tr>
+      <% }) %>
+  </tbody>
+
+</table>
+<ul>
+  <% if(rows!=0){ %>
+    <p>Number of Players: <%= rows %>
+    </p>
+    <% } else{%>
+      <li>Zero Players, Please Add One!</li>
+      <%} %>
+</ul>
+<a href="http://127.0.0.1:3000/player/create.html">ADD Players</a>
+<script>
+  document.getElementById('search-box').addEventListener('keyup', (event) => {
+    const searchQuery = event.target.value
+    let fieldsToSearch = document.getElementById('name').value
+    fetch(`/api/player?q=${encodeURIComponent(searchQuery)};${fieldsToSearch}`, {
+      method: 'GET'
+    })
+      .then(r => r.json())
+      .then(replacePlayerList); // defined below
+  });
+  function replacePlayerList(players) {
+    // Create a new container with the updated player list
+    const newContainer = document.createElement('tbody');
+    newContainer.className = 'player-list'
+    let row = 1
+    players.forEach((player) => {
+      const playerRow = document.createElement('tr');
+      playerRow.classList.add('player-row');
+
+      const playerRows = document.createElement('td');
+      playerRows.classList.add('player-rows');
+      playerRows.textContent = row;
+      playerRow.appendChild(playerRows);
+      row += 1
+
+      const playerID = document.createElement('td');
+      playerID.classList.add('player-ID');
+      playerID.textContent = player.pid;
+      playerRow.appendChild(playerID);
+
+      const playerName = document.createElement('td');
+      playerName.classList.add('player-name');
+      playerName.textContent = player.name;
+      playerRow.appendChild(playerName);
+
+      const playerHanded = document.createElement('td');
+      playerHanded.classList.add('player-handed');
+      playerHanded.textContent = player.handed;
+      playerRow.appendChild(playerHanded);
+
+      const playerActive = document.createElement('td');
+      playerActive.classList.add('player-is-active');
+      playerActive.textContent = player.is_active;
+      playerRow.appendChild(playerActive);
+
+      const playerNumJoin = document.createElement('td');
+      playerNumJoin.classList.add('player-num-join');
+      playerNumJoin.textContent = player.num_join;
+      playerRow.appendChild(playerNumJoin);
+
+      const playerNumWon = document.createElement('td');
+      playerNumWon.classList.add('player-num-won');
+      playerNumWon.textContent = player.num_won;
+      playerRow.appendChild(playerNumWon);
+
+      const playerNumDq = document.createElement('td');
+      playerNumDq.classList.add('player-num-dq');
+      playerNumDq.textContent = player.num_dq;
+      playerRow.appendChild(playerNumDq);
+
+      const playerBalance = document.createElement('td');
+      playerBalance.classList.add('player-balance-usd-cents');
+      playerBalance.textContent = player.balance_usd_cents;
+      playerRow.appendChild(playerBalance);
+
+      const playerTotalPoints = document.createElement('td');
+      playerTotalPoints.classList.add('player-total-points');
+      playerTotalPoints.textContent = player.total_points;
+      playerRow.appendChild(playerTotalPoints);
+
+      const playerTotalPrize = document.createElement('td');
+      playerTotalPrize.classList.add('player-total-prize-usd-cents');
+      playerTotalPrize.textContent = player.total_prize_usd_cents;
+      playerRow.appendChild(playerTotalPrize);
+
+      const playerEfficiency = document.createElement('td');
+      playerEfficiency.classList.add('player-efficiency');
+      playerEfficiency.textContent = player.efficiency;
+      playerRow.appendChild(playerEfficiency);
+
+      const playerInActiveMatch = document.createElement('td');
+      playerInActiveMatch.classList.add('player-in_active_match');
+      playerInActiveMatch.textContent = player.in_active_match;
+      playerRow.appendChild(playerInActiveMatch);
+
+      const playerEdit = document.createElement('td');
+      playerEdit.classList.add('player-in_active_match');
+      playerEdit.innerHTML = 'Edit Player'.link("http://127.0.0.1:3000/player/" + player.pid + "/edit.html");
+      playerRow.appendChild(playerEdit);
+
+      newContainer.appendChild(playerRow);
+    });
+    // Replace the existing player list with the new container
+    const oldContainer = document.querySelector('.player-list');
+    oldContainer.parentNode.replaceChild(newContainer, oldContainer);
+  }
+
+</script>

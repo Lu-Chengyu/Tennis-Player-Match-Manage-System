@@ -1,0 +1,47 @@
+<div id="flash" style="display: none;">
+    <div>
+        Messages
+    </div>
+    <div id="flash-message">
+    </div>
+</div>
+<h1> Edit Player </h1>
+<form id="player-form">
+    <div>
+        <label>Last Name: <input id="last_name" type="text" name="lname"></label>
+    </div>
+    <div>
+        <label>True:<input id="true" type="radio" name="active" value="true"></label>
+        <label>False:<input id="false" type="radio" name="active" value="false"></label>
+    </div>
+    <div>
+        <button type="submit" onclick="editCheck()">Submit</button>
+    </div>
+</form>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('player-form')
+        const url = new URL(window.location.href);
+        const playerId = url.pathname.split('/')[2];
+        fetch(`/api/player/${playerId}`)
+            .then(r => r.json())
+            .then(data => {
+                // document.getElementById('url').action = `/api/player/${playerId}`;
+                const lastName = data.name.split(' ')[1];
+                document.getElementById('last_name').value = lastName;
+                if (data.is_active) {
+                    document.getElementById('true').checked = true;
+                }
+                else {
+                    document.getElementById('false').checked = true;
+                }
+            })
+            .catch(error => {
+                document.getElementById('flash-message').innerHTML = error.message
+                document.getElementById('flash').style.display = 'block'
+            });
+        form.addEventListener('submit', (event) => {
+            event.preventDefault()
+        })
+    });
+</script>
