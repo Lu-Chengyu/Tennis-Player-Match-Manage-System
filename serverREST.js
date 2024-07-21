@@ -1,8 +1,6 @@
-const fs = require('fs');
 const path = require('path')
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
-const { exit } = require('process');
 
 let PORT = 3000;
 const HOSTNAME = 'localhost';
@@ -15,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 const util = require('util');
-const { find } = require('lodash');
+
 
 const handedURL2Data = {
     'left': 'L',
@@ -34,22 +32,19 @@ class Database {
         let defaultConfig = {
             "host": "localhost",
             "port": "27017",
-            "db": "ee547_hw",
-            "opts": {
-                "useUnifiedTopology": true
-            }
+            "db": "Tennis-Player-Match-Manage-System",
         }
-
         try {
             this.config = require(filePath)
         }
-        catch {
-            process.exit(2)
+        catch(error) {
+            console.error(`Failed to load config from ${filePath}:`, error.message);
+            this.config = defaultConfig;
         }
         this.config = this.config || defaultConfig
         this.player = 'player'
         this.match = 'match'
-        this.client = new MongoClient(`mongodb://${this.config.host}:${this.config.port}`, this.config.opts);
+        this.client = new MongoClient(`mongodb://${this.config.host}:${this.config.port}`);
         this.db = this.client.db(this.config.db)
     }
 
@@ -57,12 +52,10 @@ class Database {
         let result;
         try {
             result = await this.db.collection(this.player).findOne({ '_id': ObjectId(pid) })
-            if (!result) {
-                throw new Error()
-            }
+            result = await this.normalizedPlayer(result)
         }
         finally { }
-        return await this.normalizedPlayer(result)
+        return result
     }
 
     async getPlayers() {
@@ -74,7 +67,7 @@ class Database {
                 if (a.name < b.name) {
                     return -1
                 }
-                if (a.name > b.name) {
+                else if (a.name > b.name) {
                     return 1
                 }
                 return 0
@@ -90,7 +83,7 @@ class Database {
             if (is_active == "true") {
                 result = await this.db.collection(this.player).find({ "is_active": { $eq: true } }).toArray()
             }
-            else if (is_active == "false") {
+            else{
                 result = await this.db.collection(this.player).find({ "is_active": { $eq: false } }).toArray()
             }
             result = await this.normalizedPlayer(result)
@@ -98,7 +91,7 @@ class Database {
                 if (a.name < b.name) {
                     return -1
                 }
-                if (a.name > b.name) {
+                else if (a.name > b.name) {
                     return 1
                 }
                 return 0
@@ -125,7 +118,7 @@ class Database {
                 if (a.name < b.name) {
                     return -1
                 }
-                if (a.name > b.name) {
+                else if (a.name > b.name) {
                     return 1
                 }
                 return 0
@@ -149,7 +142,7 @@ class Database {
             result = await this.db.collection(this.player).insertOne(player)
         }
         finally { }
-        return this.getPlayer(result.insertedId)
+        return await this.getPlayer(result.insertedId)
     }
 
     async updatePlayer(pid, lname, is_active) {
@@ -172,7 +165,7 @@ class Database {
             }
         }
         finally { }
-        return this.getPlayer(pid)
+        return await this.getPlayer(pid)
     }
 
     async deletePlayer(pid) {
@@ -463,8 +456,6 @@ class Database {
             result.total_num = await this.db.collection(this.player).countDocuments()
             result.num_active = await this.db.collection(this.player).countDocuments({ 'is_active': true })
             result.num_inactive = await this.db.collection(this.player).countDocuments({ 'is_active': false })
-            //result.avg_balance = await this.db.collection(this.player).aggregate([{ $match: {} }], { $group: { _id: null, sum: { $sum: "$balance_usd_cents" } } }).sum ?? 0
-            // let a =  await this.db.collection(this.player).aggregate([{ $match: {'is_active': true} }], { $group: { _id: null, sum: { $sum: "$balance_usd_cents" } } })
             let temp = await this.db.collection(this.player).find({}).toArray()
             let sum = 0
             temp.forEach((d)=>{ sum += d.balance_usd_cents})
@@ -627,16 +618,6 @@ app.get('/dashboard.html', async (req, res) => {
         body: await render(`pages/dashboard`, {})
     })
 });
-
-// app.get('/players.html', async (req, res) => {
-//     const data = await DB.getPlayers()
-//     res.render("./pages/player/list", { data })
-// });
-
-// app.get('/player/:pid/edit.html', (req, res) => {
-//     const id = req.params.pid;
-//     res.sendFile(path.join(__dirname,'./public/player/edit.html'))
-// });
 
 app.get('/api/match', async (req, res) => {
     let is_active = req.query["is_active"] || 'true'
