@@ -8,17 +8,20 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
-    services:
-      mongo:
-        image: mongo:latest
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongo --eval 'db.runCommand(\"ping\").ok'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+    strategy:
+      matrix:
+        mongodb-version: ['6.0', '7.0', '8.0']
+        
+    # services:
+    #   mongo:
+    #     image: mongo:latest
+    #     ports:
+    #       - 27017:27017
+        # options: >-
+        #   --health-cmd "mongo --eval 'db.runCommand(\"ping\").ok'"
+        #   --health-interval 10s
+        #   --health-timeout 5s
+        #   --health-retries 10
       
     steps:
       - name: Checkout code
@@ -28,15 +31,33 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '14'
+          
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.11.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
+          mongodb-username: supercharge
+          mongodb-password: secret
+          mongodb-db: supercharge
 
       - name: Install dependencies
         run: npm install
+
+      # - name: Wait for MongoDB to be ready
+      #   run: |
+      #     echo "Waiting for MongoDB to be ready..."
+      #     for i in {1..30}; do
+      #       mongo --eval "db.runCommand('ping').ok" && echo "MongoDB is ready" && exit 0
+      #       echo "Waiting for MongoDB... ($i/30)"
+      #       sleep 5
+      #     done
+      #     echo "MongoDB did not become ready in time" && exit 1
 
       - name: Run tests
         run: npm test
 
       - name: Start server
-        run: node ./serverREST.js &
+        run: node ./serverREST.js
 
       - name: Wait for server to start
         run: sleep 10
